@@ -32,6 +32,8 @@ workflows:
     jobs:
       - build
       - test
+        requires
+          - build
       - heroku/deploy-via-git:
           context: heroku
           requires:
