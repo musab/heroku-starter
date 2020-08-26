@@ -1,21 +1,39 @@
 version: 2.1
 
 orbs:
-  heroku: circleci/heroku@1.2.2 # Use the Heroku orb in your config
+  heroku: circleci/heroku@1.2.2
 
 jobs:
   build:
-      docker:
-        - image: cimg/ruby:2.7.1-node
-      steps:
-        - checkout
-        - run: npm install
+    docker:
+      - image: cimg/ruby:2.7.1-node
+    steps:
+      - checkout
+      - restore_cache:
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - run: npm install
+      - save_cache:
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/usr/local/lib/node_modules
+  test:
+    docker:
+      - image: cimg/ruby:2.7.1-node
+    steps:
+      - checkout
+      - restore_cache:
+          key: node-v1-{{ .Branch }}-{{ checksum "package-lock.json" }}
+      - run: npm test
+
+
 
 workflows:
   heroku_deploy:
     jobs:
       - build
+      - test
       - heroku/deploy-via-git:
           context: heroku
           requires:
+            - test
             - build
